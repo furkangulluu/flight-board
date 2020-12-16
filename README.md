@@ -1,7 +1,3 @@
-# case
-
-> case for tav
-
 ## Build Setup
 
 ``` bash
