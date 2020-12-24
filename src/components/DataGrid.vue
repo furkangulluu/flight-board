@@ -21,6 +21,7 @@
               {{ key | capitalize }}
               <span class="arrow" :class="sortOrders[key] > 0 ? 'asc' : 'desc'">
               </span>
+              <span class="index" v-if="sortKeyList.findIndex(x=>x.key==key) != -1">{{ sortKeyList.findIndex(x=>x.key==key)+1 }}</span>
             </th>
           </draggable>
       </thead>
@@ -85,7 +86,6 @@ export default {
       this.sortKeyList.forEach(x=>{
         sortParams.push([ x.key, x.type ])
       })
-      console.log(this.sortOrders)
 
       if (this.sortKey && this.multiple) {
         rows = multiColumnSort(
@@ -143,79 +143,85 @@ export default {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
+
+  .form-check{
+      width: 100%;
+      margin-bottom: 15px;
+  }
+
+  table {
+    border: 2px solid #000000;
+    border-radius: 3px;
+    background-color: #fff;
+
+    th {
+      background-color: #181c57;
+      color: rgba(255, 255, 255, 0.66);
+      cursor: pointer;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    td {
+      background-color: #f9f9f9;
+    }
+
+    th,td {
+      min-width: 120px;
+      padding: 10px 20px;
+    }
+
+    th.active {
+      color: #fff;
+
+      .arrow {
+        opacity: 1;
+      }
+    }
+
+    .arrow {
+      display: inline-block;
+      vertical-align: middle;
+      width: 0;
+      height: 0;
+      margin-left: 5px;
+      opacity: 0.66;
+
+      &.asc {
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-bottom: 4px solid #fff;
+      }
+
+      &.desc {
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-top: 4px solid #fff;
+      }
+    }
+
+    .index{
+      font-size: 12px;
+    }
+  }
+
+
+  .flip-list-move {
+    transition: transform 1s;
+  }
+
+  .ghost {
+    opacity: 0.5;
+    background: #c8ebfb;
+  }
+
+  .v-context{
+    min-width: auto !important;
+  }
+
 }
 
-.form-check{
-    width: 100%;
-    margin-bottom: 15px;
-}
-
-table {
-  border: 2px solid #000000;
-  border-radius: 3px;
-  background-color: #fff;
-}
-
-th {
-  background-color: #181c57;
-  color: rgba(255, 255, 255, 0.66);
-  cursor: pointer;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-
-td {
-  background-color: #f9f9f9;
-}
-
-th,
-td {
-  min-width: 120px;
-  padding: 10px 20px;
-}
-
-th.active {
-  color: #fff;
-}
-
-th.active .arrow {
-  opacity: 1;
-}
-
-.arrow {
-  display: inline-block;
-  vertical-align: middle;
-  width: 0;
-  height: 0;
-  margin-left: 5px;
-  opacity: 0.66;
-}
-
-.arrow.asc {
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-bottom: 4px solid #fff;
-}
-
-.arrow.desc {
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 4px solid #fff;
-}
-
-.flip-list-move {
-  transition: transform 1s;
-}
-
-.ghost {
-  opacity: 0.5;
-  background: #c8ebfb;
-}
-
-.v-context{
-  min-width: auto !important;
-}
 
 </style>
