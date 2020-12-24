@@ -1,32 +1,37 @@
 <template>
   <div class="wrapper">
+    <div class="form-check">
+      <input type="checkbox" v-model="multiple" class="form-check-input" id="exampleCheck1">
+      <label class="form-check-label" for="exampleCheck1">Multiple Sort</label>
+    </div>
     <table>
       <thead>
-        <tr>
-          <th v-for="key in columns"
-            @click="sortBy(key)"
-            :class="{ active: sortKey == key }"
-            :key="key">
-            {{ key | capitalize }}
-            <span class="arrow" :class="sortOrders[key] > 0 ? 'asc' : 'desc'">
-            </span>
-          </th>
-        </tr>
+          <draggable
+            :list="columns"
+            ghost-class="ghost"
+            @start="dragging = true"
+            @end="dragging = false"
+            tag="tr"
+          >
+            <th v-for="key in columns"
+              @contextmenu.prevent="$refs.menu.open"
+              @click="sortBy(key)"
+              :class="{ active: sortKeyList.findIndex(x=>x.key==key) >= 0 }"
+              :key="key">
+              {{ key | capitalize }}
+              <span class="arrow" :class="sortOrders[key] > 0 ? 'asc' : 'desc'">
+              </span>
+            </th>
+          </draggable>
       </thead>
       <transition name="flip-list">
-        <draggable
-          :list="filteredRows"
-          ghost-class="ghost"
-          @start="dragging = true"
-          @end="dragging = false"
-          tag="tbody"
-        >
+        <tbody>
           <tr v-for="entry in filteredRows" :key="entry.FlightId">
             <td v-for="key in columns" :key="key">
               {{entry[key]}}
             </td>
           </tr>
-        </draggable>
+        </tbody>
       </transition>
     </table>
   </div>
@@ -34,6 +39,7 @@
 
 <script>
 import draggable from 'vuedraggable'
+import multiColumnSort from 'multi-column-sort'
 
 export default {
   components: {
@@ -47,8 +53,10 @@ export default {
     });
     return {
       sortKey: "",
+      sortKeyList:[],
       sortOrders: sortOrders,
-      dragging: false
+      dragging: false,
+      multiple: false
     }
   },
   computed: {
@@ -57,6 +65,7 @@ export default {
       var filterKey = this.filterKey && this.filterKey.toLowerCase();
       var order = this.sortOrders[sortKey] || 1;
       var rows = this.rows;
+
       if (filterKey) {
         rows = rows.filter((row)=>{
           return Object.keys(row).some((key)=>{
@@ -68,14 +77,35 @@ export default {
           });
         });
       }
-      if (sortKey) {
-        rows = rows.slice().sort((a, b)=>{
-          a = a[sortKey];
-          b = b[sortKey];
-          return (a === b ? 0 : a > b ? 1 : -1) * order;
-        });
+      const getColumnValue = (column, value) => {
+        return value
+      }
+
+      const sortParams=[]
+      this.sortKeyList.forEach(x=>{
+        sortParams.push([ x.key, x.type ])
+      })
+      console.log(this.sortOrders)
+
+      if (this.sortKey && this.multiple) {
+        rows = multiColumnSort(
+          rows,
+          sortParams,
+          getColumnValue
+        )
+      }else if(this.sortKey && !this.multiple){
+        rows = multiColumnSort(
+          rows,
+          [
+            sortParams[0]
+          ],
+          getColumnValue
+        )
       }
       return rows;
+    },
+    removeMultipleSort(){
+      this.multiple == false ? this.sortKeyList.splice(1,this.sortKeyList.length) : null
     }
   },
   filters: {
@@ -87,16 +117,37 @@ export default {
     sortBy(key) {
       this.sortKey = key;
       this.sortOrders[key] = this.sortOrders[key] * -1;
-      console.log("SORTBY",this.sortOrders,key)
+
+      let sortType = this.sortOrders[key]>0 ? 'ASC' : 'DESC'
+      let index = this.sortKeyList.findIndex((x => x.key == key));
+
+      if (this.multiple) {
+        if (index >= 0) {
+        this.sortKeyList[index].type = sortType;
+        }else{
+          this.sortKeyList.push({ key: key, type: sortType})
+        }
+      }else{
+        this.sortKeyList = [{ key: key, type: sortType }]
+      }
+
     }
   }
 }
 </script>
 
 <style lang="scss">
+@import '~vue-context/src/sass/vue-context';
+
 .wrapper{
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
+}
+
+.form-check{
+    width: 100%;
+    margin-bottom: 15px;
 }
 
 table {
@@ -117,7 +168,6 @@ th {
 
 td {
   background-color: #f9f9f9;
-  cursor: all-scroll;
 }
 
 th,
@@ -162,6 +212,10 @@ th.active .arrow {
 .ghost {
   opacity: 0.5;
   background: #c8ebfb;
+}
+
+.v-context{
+  min-width: auto !important;
 }
 
 </style>
